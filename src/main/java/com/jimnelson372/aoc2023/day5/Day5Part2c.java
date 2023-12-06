@@ -55,10 +55,8 @@ public class Day5Part2c {
             // Convert the stream of numbers into a stream of pairs
             //   then flatMap over those pairs to produce each sead # we're going to examine.
             var mainStream = IntStream.range(0, seedData.size()/2)
-                    //.parallel()   // does actually nearly halve this heavy processor operation.
                     .map(i -> i * 2)
                     .mapToObj(i -> Range.between(seedData.get(i), seedData.get(i) + seedData.get(i + 1)));
-
 
             // add the mapping of the location finding steps to the main steam.
             for(var m : mapList) {
@@ -106,57 +104,53 @@ public class Day5Part2c {
     }
 
     private static List<Range<Long>> doMapping(Range<Long> fromRange, ArrayList<NumberRange> m) {
-        var searchNdx = Collections.binarySearch(m,fromRange.getMinimum(), (a,b) -> {
-            if (a instanceof NumberRange n && b instanceof Long bl) {
-                return -n.range.elementCompareTo(bl);
+        var searchNdx = Collections.binarySearch(m,fromRange.getMinimum(), (low,high) -> {
+            if (low instanceof NumberRange validLower && high instanceof Long validHigher) {
+                // note that we reverse the order here,
+                // as the elementCompareTo is bl to itself, rather than itself to bl
+                return -validLower.range.elementCompareTo(validHigher);
             }
             return 0;
         });
 
-//        if (searchNdx < 0)
-//            System.out.println("-insert at: " + searchNdx + " or " + (-(searchNdx+1)) + " with size() at " + m.size());
-//        else {
-//            System.out.println("+insert at: " + searchNdx + " with size() at " + m.size());
-//        }
-
         var posNdx = searchNdx>=0 ? searchNdx : -(searchNdx-1);
+        var minOfFromRangeBelowPosNdxRange = searchNdx<0;
 
-        var newPairsList = new ArrayList<Range<Long>>();
+        var toRangeList = new ArrayList<Range<Long>>();
 
         if (posNdx >= m.size() || !fromRange.isOverlappedBy(m.get(posNdx).range)) {
-            newPairsList.add(fromRange); // pass it on, as it didn't intersect any.
-            return newPairsList;
+            toRangeList.add(fromRange); // pass it on, as it didn't intersect any ranges in the map
+            return toRangeList;
         }
 
         var workingRange = fromRange;
-        var match = m.get(posNdx);
+        var currentMappingRange = m.get(posNdx);
 
-        if (searchNdx<0) {
+        if (minOfFromRangeBelowPosNdxRange) {
                 //we've already handled the non-overlap case, so we must overlap one.
-                // first put the non-overlapped section into the newPairsList.
-                newPairsList.add(Range.between(workingRange.getMinimum(),m.get(posNdx).range.getMinimum()-1));
+                // first put the non-overlapped section into the toRangeList.
+                toRangeList.add(Range.between(workingRange.getMinimum(),m.get(posNdx).range.getMinimum()-1));
                 // Then pass on the intersected section for further processing.
                 workingRange = m.get(posNdx).range.intersectionWith(workingRange);
         }
 
-        if (match.range.equals(workingRange) || match.range.containsRange(workingRange)) {
-            var mapDiff = match.mapDiff;  // even though the full range will move on, it must be adjusted
+        if (currentMappingRange.range.equals(workingRange) || currentMappingRange.range.containsRange(workingRange)) {
+            var mapDiff = currentMappingRange.mapDiff;  // even though the full range will move on, it must be adjusted
             var newMin = workingRange.getMinimum() + mapDiff;
             var newMax = workingRange.getMaximum() + mapDiff;
-            newPairsList.add(Range.between(newMin,newMax));
+            toRangeList.add(Range.between(newMin,newMax));
         } else {
             for(int i = posNdx; i<m.size() && m.get(i).range.isOverlappedBy(workingRange); i++) {
-                match = m.get(i);
-                var intersection = match.range.intersectionWith(workingRange);
-                var mapDiff = match.mapDiff;  // even though the full range will move on, it must be adjusted
+                currentMappingRange = m.get(i);
+                var intersection = currentMappingRange.range.intersectionWith(workingRange);
+                var mapDiff = currentMappingRange.mapDiff;  // even though the full range will move on, it must be adjusted
                 var newMin = intersection.getMinimum() + mapDiff;
                 var newMax = intersection.getMaximum() + mapDiff;
-                newPairsList.add(Range.between(newMin,newMax));
+                toRangeList.add(Range.between(newMin,newMax));
             }
         }
 
-        return newPairsList;
-        //return rg >=0 && rg < m.size() ? value+m.get(rg).mapDiff : value;
+        return toRangeList;
     }
 
 //    private static boolean valueInNumberRange(long value, NumberRange r) {
