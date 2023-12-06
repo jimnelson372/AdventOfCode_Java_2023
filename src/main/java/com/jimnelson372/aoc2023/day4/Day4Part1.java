@@ -14,7 +14,7 @@ public class Day4Part1 {
         String resourcesPath = Paths.get("src", "main", "resources").toString();
         try(BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath,"day4-puzzle-input.txt"))) {
             Stream<String> lines = br.lines();
-              var result = getScorePerCard(lines);
+              var result = getTotalPoints(lines);
 
               // Give us the results.
             System.out.println("result = " + result);
@@ -23,7 +23,7 @@ public class Day4Part1 {
         }
     }
 
-    private static Integer getScorePerCard(Stream<String> lines) {
+    private static Integer getTotalPoints(Stream<String> lines) {
         return lines.map(card -> {
            var sections = List.of(card.split("[:|]\\s+"));
 
@@ -32,6 +32,7 @@ public class Day4Part1 {
 
             Set<Integer> intersect = intersectionSet(winning, ourNumbers);
 
+            // this line is basically factorial. Just testing reduce() here.
             return intersect.stream().reduce(0, (acc, val) -> acc == 0 ? 1 : acc+acc);
         }).reduce(0, Integer::sum);
     }
