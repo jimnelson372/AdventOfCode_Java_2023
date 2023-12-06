@@ -32,7 +32,8 @@ public class Day4Part1 {
 
             Set<Integer> intersect = intersectionSet(winning, ourNumbers);
 
-            // this line is basically factorial. Just testing reduce() here.
+            // this line is basically pow(2,intersect.size()-1). But for the #s we're using
+            //    this reduce is fine.
             return intersect.stream().reduce(0, (acc, val) -> acc == 0 ? 1 : acc+acc);
         }).reduce(0, Integer::sum);
     }
