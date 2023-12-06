@@ -32,8 +32,7 @@ import java.util.stream.IntStream;
 
 public class Day5Part2c {
 
-
-    record NumberRange(Range<Long> range, long mapDiff) {}
+    record MappingRangeInfo(Range<Long> range, long mapDiff) {}
 //    record SeedRange(long from, long limit) {}
 
     public static void main(String[] args) {
@@ -49,7 +48,7 @@ public class Day5Part2c {
             System.out.println("Number of seed ranges we're exploring: " + seedData.size());
 
             // Get the mapping information.
-            var mapList = parseMappingStagesSeesToLocations(br);
+            var listOfMappings = parseMappingStagesSeesToLocations(br);
 
             // This is the mainStream for part 2.
             // Convert the stream of numbers into a stream of pairs
@@ -59,8 +58,11 @@ public class Day5Part2c {
                     .mapToObj(i -> Range.between(seedData.get(i), seedData.get(i) + seedData.get(i + 1)));
 
             // add the mapping of the location finding steps to the main steam.
-            for(var m : mapList) {
-                mainStream = mainStream.flatMap(val -> doMapping(val,m).stream());
+            //  so they will be a pipeline processing ranges to ranges.
+            for(var m : listOfMappings) {
+                // flatMap is used since the number of ranges going into doMappingOfRanges
+                // may differ from the number coming out.  A List is generated, needing to be flattened.
+                mainStream = mainStream.flatMap(val -> doMappingOfRanges(val,m).stream());
             }
             // Finally,
             // find the smallest location number of this final mapping and that's our solution!
@@ -76,8 +78,8 @@ public class Day5Part2c {
         System.out.println("Time=" +(System.nanoTime() - startTime)/ 1_000_000 + "ms");
     }
 
-    private static List<ArrayList<NumberRange>> parseMappingStagesSeesToLocations(BufferedReader br) throws IOException {
-        List<ArrayList<NumberRange>> mapList = new ArrayList<>();
+    private static List<ArrayList<MappingRangeInfo>> parseMappingStagesSeesToLocations(BufferedReader br) throws IOException {
+        List<ArrayList<MappingRangeInfo>> mapList = new ArrayList<>();
         String nextLine;
         // For Each of the Maps
         //    parse and organize the ranges for lookup
@@ -88,7 +90,7 @@ public class Day5Part2c {
             nextLine = readLineAfterSkippingBlanks(br);
 
             // Build Mapping To list, sorted by ranges.
-            var toMap = new ArrayList<NumberRange>();
+            var toMap = new ArrayList<MappingRangeInfo>();
             while (nextLine != null && Character.isDigit(nextLine.codePointAt(0))) {
                 toMap.add(parseToNumRange(nextLine));
                 nextLine = readLineAfterSkippingBlanks(br);
@@ -103,59 +105,51 @@ public class Day5Part2c {
         return mapList;
     }
 
-    private static List<Range<Long>> doMapping(Range<Long> fromRange, ArrayList<NumberRange> m) {
+    private static List<Range<Long>> doMappingOfRanges(Range<Long> fromRange, ArrayList<MappingRangeInfo> m) {
+        // Use binary search to locate which MappingRangeInfo to start from for our fromRange intersect tests.
         var searchNdx = Collections.binarySearch(m,fromRange.getMinimum(), (low,high) -> {
-            if (low instanceof NumberRange validLower && high instanceof Long validHigher) {
-                // note that we reverse the order here,
-                // as the elementCompareTo is bl to itself, rather than itself to bl
+            if (low instanceof MappingRangeInfo validLower && high instanceof Long validHigher) {
+                // note that we reverse the compare result here,
+                // as the elementCompareTo compares validHigher to itself, rather than itself to validHigher
                 return -validLower.range.elementCompareTo(validHigher);
             }
             return 0;
         });
 
         var posNdx = searchNdx>=0 ? searchNdx : -(searchNdx-1);
-        var minOfFromRangeBelowPosNdxRange = searchNdx<0;
 
+        // Condition where our fromRange doesn't overlap any of the mapping ranges.
+        // So pass it back as is.
+        if (posNdx >= m.size() || !fromRange.isOverlappedBy(m.get(posNdx).range)) {
+            return List.of(fromRange);
+        }
+
+        // From here forward we may have multiple ranges, so
+        // we'll add any we need to this list.
         var toRangeList = new ArrayList<Range<Long>>();
 
-        if (posNdx >= m.size() || !fromRange.isOverlappedBy(m.get(posNdx).range)) {
-            toRangeList.add(fromRange); // pass it on, as it didn't intersect any ranges in the map
-            return toRangeList;
+        if (searchNdx<0) {
+            //we've already handled the non-overlap case, so we know this range is a partial overlap.
+            // first put the non-overlapped section into the toRangeList.
+            toRangeList.add(Range.between(fromRange.getMinimum(),m.get(posNdx).range.getMinimum()-1));
+            // we can leave the workingRange as is, since it will be intersected as needed.
         }
 
-        var workingRange = fromRange;
-        var currentMappingRange = m.get(posNdx);
+        // we'll keep intersecting with further map number ranges, until we don't have an overlap.
+        for(int i = posNdx; i<m.size() && m.get(i).range.isOverlappedBy(fromRange); i++) {
+            var currentMappingInfo = m.get(i);
+            var intersection = currentMappingInfo.range.intersectionWith(fromRange);
 
-        if (minOfFromRangeBelowPosNdxRange) {
-                //we've already handled the non-overlap case, so we must overlap one.
-                // first put the non-overlapped section into the toRangeList.
-                toRangeList.add(Range.between(workingRange.getMinimum(),m.get(posNdx).range.getMinimum()-1));
-                // Then pass on the intersected section for further processing.
-                workingRange = m.get(posNdx).range.intersectionWith(workingRange);
-        }
+            // even though the full range will move on, it must be adjusted by the mapDiff amount.
+            var mapDiff = currentMappingInfo.mapDiff;
+            var newMin = intersection.getMinimum() + mapDiff;
+            var newMax = intersection.getMaximum() + mapDiff;
 
-        if (currentMappingRange.range.equals(workingRange) || currentMappingRange.range.containsRange(workingRange)) {
-            var mapDiff = currentMappingRange.mapDiff;  // even though the full range will move on, it must be adjusted
-            var newMin = workingRange.getMinimum() + mapDiff;
-            var newMax = workingRange.getMaximum() + mapDiff;
             toRangeList.add(Range.between(newMin,newMax));
-        } else {
-            for(int i = posNdx; i<m.size() && m.get(i).range.isOverlappedBy(workingRange); i++) {
-                currentMappingRange = m.get(i);
-                var intersection = currentMappingRange.range.intersectionWith(workingRange);
-                var mapDiff = currentMappingRange.mapDiff;  // even though the full range will move on, it must be adjusted
-                var newMin = intersection.getMinimum() + mapDiff;
-                var newMax = intersection.getMaximum() + mapDiff;
-                toRangeList.add(Range.between(newMin,newMax));
-            }
         }
 
         return toRangeList;
     }
-
-//    private static boolean valueInNumberRange(long value, NumberRange r) {
-//        return r.range.contains(value);
-//    }
 
     private static List<Long> parseToListOfNumbers(String line) {
         return Arrays.stream(line.split("\\s+"))
@@ -163,9 +157,9 @@ public class Day5Part2c {
                                 .toList();
     }
 
-    private static NumberRange parseToNumRange(String line) {
+    private static MappingRangeInfo parseToNumRange(String line) {
         var input = parseToListOfNumbers(line);
-        return new NumberRange(
+        return new MappingRangeInfo(
                 Range.between(input.get(1),
                 input.get(1) + input.get(2) -1),
                 input.get(0) - input.get(1));
@@ -178,6 +172,5 @@ public class Day5Part2c {
         }
         return nextLine;
     }
-
 
 }
