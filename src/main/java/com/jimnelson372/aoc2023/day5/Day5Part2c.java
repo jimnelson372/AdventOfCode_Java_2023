@@ -59,10 +59,10 @@ public class Day5Part2c {
 
             // add the mapping of the location finding steps to the main steam.
             //  so they will be a pipeline processing ranges to ranges.
-            for(var m : listOfMappings) {
+            for(var mappingInfo : listOfMappings) {
                 // flatMap is used since the number of ranges going into doMappingOfRanges
                 // may differ from the number coming out.  A List is generated, needing to be flattened.
-                mainStream = mainStream.flatMap(val -> doMappingOfRanges(val,m).stream());
+                mainStream = mainStream.flatMap(fromRange -> doMappingOfRanges(fromRange,mappingInfo).stream());
             }
             // Finally,
             // find the smallest location number of this final mapping and that's our solution!
@@ -105,9 +105,10 @@ public class Day5Part2c {
         return mapList;
     }
 
-    private static List<Range<Long>> doMappingOfRanges(Range<Long> fromRange, ArrayList<MappingRangeInfo> m) {
+    private static List<Range<Long>> doMappingOfRanges(Range<Long> fromRange, ArrayList<MappingRangeInfo> mappingList) {
         // Use binary search to locate which MappingRangeInfo to start from for our fromRange intersect tests.
-        var searchNdx = Collections.binarySearch(m,fromRange.getMinimum(), (low,high) -> {
+        //  it will use the fromRange minimum value for the testing if below, within, or above the mapping range.
+        var searchNdx = Collections.binarySearch(mappingList,fromRange.getMinimum(), (low,high) -> {
             if (low instanceof MappingRangeInfo validLower && high instanceof Long validHigher) {
                 // note that we reverse the compare result here,
                 // as the elementCompareTo compares validHigher to itself, rather than itself to validHigher
@@ -116,11 +117,11 @@ public class Day5Part2c {
             return 0;
         });
 
-        var posNdx = searchNdx>=0 ? searchNdx : -(searchNdx-1);
+        var posNdx = searchNdx>=0 ? searchNdx : -(searchNdx+1);
 
         // Condition where our fromRange doesn't overlap any of the mapping ranges.
         // So pass it back as is.
-        if (posNdx >= m.size() || !fromRange.isOverlappedBy(m.get(posNdx).range)) {
+        if (posNdx >= mappingList.size() || !fromRange.isOverlappedBy(mappingList.get(posNdx).range)) {
             return List.of(fromRange);
         }
 
@@ -131,13 +132,13 @@ public class Day5Part2c {
         if (searchNdx<0) {
             //we've already handled the non-overlap case, so we know this range is a partial overlap.
             // first put the non-overlapped section into the toRangeList.
-            toRangeList.add(Range.between(fromRange.getMinimum(),m.get(posNdx).range.getMinimum()-1));
+            toRangeList.add(Range.between(fromRange.getMinimum(),mappingList.get(posNdx).range.getMinimum()-1));
             // we can leave the workingRange as is, since it will be intersected as needed.
         }
 
         // we'll keep intersecting with further map number ranges, until we don't have an overlap.
-        for(int i = posNdx; i<m.size() && m.get(i).range.isOverlappedBy(fromRange); i++) {
-            var currentMappingInfo = m.get(i);
+        for(int i = posNdx; i<mappingList.size() && mappingList.get(i).range.isOverlappedBy(fromRange); i++) {
+            var currentMappingInfo = mappingList.get(i);
             var intersection = currentMappingInfo.range.intersectionWith(fromRange);
 
             // even though the full range will move on, it must be adjusted by the mapDiff amount.
@@ -147,6 +148,13 @@ public class Day5Part2c {
 
             toRangeList.add(Range.between(newMin,newMax));
         }
+
+        // finally, if our fromRange extends beyond the last mapping range, we need that range
+        // to be added as well.
+        Long maximumOfTheMappingRanges = mappingList.get(mappingList.size() - 1).range.getMaximum();
+        if (maximumOfTheMappingRanges < fromRange.getMaximum())
+            toRangeList.add(Range.between(maximumOfTheMappingRanges+1,fromRange.getMaximum()));
+
 
         return toRangeList;
     }
