@@ -33,6 +33,25 @@ public class Day4Part2 {
         // Rather than recurse to the base case (which will be the final cards)
         // well do the processing from the last card and move backwards.
         // Note: we start at the end of the list with the iterator and use previous() to move backwards.
+
+        // In other words, the algorithm is:
+        //    Start beyond the last line of the provided "matchingPerCard" List.
+        //    Iterating backwords, as long as we have a previous line:
+        //       We get the current line's known count of matching numbers from the provided list.
+        //       We'll be calculating the # of additional cards that will result by
+        //          adding 1 more of this card.  And this calculation will be stored in
+        //          a new ArrayList, "additionalCardsWonByThisCard" at the same ndx as this line.
+        //       For the current card, we use its count to sum the counts for that # of
+        //           following rows (capped by available rows) from the additionalCardsWonByThisCard.
+        //           (By this time, we've already calculated those rows's values.)
+        //           We add this sum to our current card's count and record this in the
+        //           additionalCardsWonByThisCart array at the same index.
+        //       When we've completed this process for all the rows,
+        //          we now sum up all the values in the additionalCardsWonByThisCard array.
+        //          And that's our answer.
+        //    I believe this is much better than taking all the recursive steps to start at
+        //          the top and have to keep track of which rows were already seen, etc.
+
         ListIterator<Integer> matchingPerCardIterator = matchingPerCard.listIterator(totalStartCards);
         while(matchingPerCardIterator.hasPrevious()) {
             var curNdx = matchingPerCardIterator.previousIndex();
