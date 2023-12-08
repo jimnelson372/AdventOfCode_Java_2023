@@ -22,20 +22,17 @@ public class Day6Part1 {
             System.out.println("Time allowed per race = " + times);
             System.out.println("Records in each race = " +distances);
 
-
-
             var result = IntStream.range(0,times.size())
                     .boxed()
                     .map(i -> {
                         var time = times.get(i);
                         var record = distances.get(i);
                         var cntBetterThanRecord = 0;
-                        for(var hold=time/2+1;hold<time;hold++) {
+                        for(var hold=1;hold<time;hold++) {
                             var potential = hold * (time-hold);
                             if (potential > record) cntBetterThanRecord++;
-                            else break;
-                        }
-                        return (cntBetterThanRecord)*2 + ((time % 2 == 0) ? 1 : 0);
+                         }
+                        return cntBetterThanRecord;
                     }).reduce(1, (acc, l) -> acc*l);
 
             System.out.println("The result of the puzzle is = " + result);
