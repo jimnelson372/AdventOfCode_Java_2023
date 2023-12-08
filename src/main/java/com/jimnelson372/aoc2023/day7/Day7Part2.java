@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
-
 public class Day7Part2 {
 
     enum HandType {
@@ -33,6 +32,7 @@ public class Day7Part2 {
 
         // Part 2 made J the lowest value, so it moved to the start of the string.
         static String cardOrder = "J23456789TQKA";
+        static final char WildCardChar = 'J';
 
         public Hand(String cards, int bid) {
             this.cards = cards;
@@ -52,32 +52,34 @@ public class Day7Part2 {
             var countedCards = cardValues.stream()
                     .collect(Collectors.groupingBy(a -> a,Collectors.counting()));
 
+            var wildCardNdx = cardOrder.indexOf(WildCardChar);
             // Here I cut into my original stream processing
             //  to get the count of J cards
-            var numJs = countedCards.getOrDefault(0, 0L); // J is 0 in this case.
-            if (numJs == 5) {
+            var numWilds = countedCards.getOrDefault(wildCardNdx, 0L); // J is 0 in this case.
+            if (numWilds == 5) {
                 // if J is the FiveOfKind, we can set the intrinsic type to 50 and return early
                 this.intrinsicType = 50;
                 return;
             }
 
             var countedCardsBeforeApplyWild = countedCards
-                    .entrySet().stream().sorted(Map.Entry.<Integer, Long>comparingByValue().reversed()
+                    .entrySet().stream()
+                    .filter(e -> e.getKey() != wildCardNdx)  // we now filter out the remaining J's (key 0)
+                    .sorted(Map.Entry.<Integer, Long>comparingByValue().reversed()
                             .thenComparing(Map.Entry.<Integer, Long>comparingByKey().reversed()))
-                    .filter(e -> e.getKey() != 0)  // we now filter out the remaining J's (key 0)
                     .toList();
 
-            if (numJs > 0) {
-                // If we had counts of J before we filtered them out,
+            if (numWilds > 0) {
+                // If we had counts of J (Or other wildcard) before we filtered them out,
                 //  add those to the remaining card with the top count (index 0).
 
                 var topEntry = countedCardsBeforeApplyWild.get(0);
-                topEntry.setValue(topEntry.getValue() + numJs); // add J's count to topCount;
+                topEntry.setValue(topEntry.getValue() + numWilds); // add J's count to topCount;
             }
 
               var holding = countedCardsBeforeApplyWild.stream()
-                      .map(e -> e.getValue().intValue())
-                    .toList();
+                            .map(e -> e.getValue().intValue())
+                            .toList();
             // We can create a comparable value from the highest 2 counts
             //   as seen in the switch statement below.
             this.intrinsicType = holding.get(0)*10 + (holding.size() >1  ? holding.get(1) : 0);
