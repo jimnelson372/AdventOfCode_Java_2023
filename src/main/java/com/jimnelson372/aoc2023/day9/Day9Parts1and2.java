@@ -42,7 +42,7 @@ public class Day9Parts1and2 {
         if (allDiffsAreZero(seqList))
             return 0;
 
-        return seqList.getLast() + getNextInSequence(calcDiffSequence(seqList));
+        return seqList.get(seqList.size()-1) + getNextInSequence(calcDiffSequence(seqList));
     }
     private static int getPriorInSequence(List<Integer> seqList) {
         //System.out.println(seqList);
@@ -51,7 +51,7 @@ public class Day9Parts1and2 {
         if (allDiffsAreZero(seqList))
             return 0;
 
-        return seqList.getFirst() - getPriorInSequence(calcDiffSequence(seqList));
+        return seqList.get(0) - getPriorInSequence(calcDiffSequence(seqList));
     }
 
     private static boolean allDiffsAreZero(List<Integer> seqList) {
@@ -59,8 +59,8 @@ public class Day9Parts1and2 {
         //  easily seen to be 0.  No need to sum all lines to see if they are 0.
         //  BTW, 1 line did end in a 0, but was in reverse order.  So I initially got the wrong answer until
         //   I checked both sides for 0 first.
-        return (seqList.getLast() == 0
-                && seqList.getFirst() == 0
+        return (seqList.get(seqList.size()-1) == 0
+                && seqList.get(0) == 0
                 && seqList.stream().reduce(0, Integer::sum) == 0);
     }
 
