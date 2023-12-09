@@ -28,7 +28,7 @@ public class Day8Part2_NonGeneralSolution_Exploration {
     }
 
     static BigInteger lcmOf(List<BigInteger> list) {
-        return list.stream().reduce((acc, b) -> acc = BorrowedUtils.lcm(acc,b)).orElse(BigInteger.ZERO);
+        return list.stream().reduce(BorrowedUtils::lcm).orElse(BigInteger.ZERO);
     }
 
     static HashMap<String, LeftRight> map = new HashMap<>();
@@ -100,7 +100,7 @@ public class Day8Part2_NonGeneralSolution_Exploration {
                                         priorCountReachingZ = count;
                                         count = 0; // reset count if we're cycling again.
                                     }
-                                };
+                                }
                             }
                         }
                         return count;
