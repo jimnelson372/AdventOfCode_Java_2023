@@ -6,22 +6,26 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 public class Day9Parts1and2 {
-
 
     public static void main(String[] args) {
         var startTime = System.nanoTime();
         String resourcesPath = Paths.get("src", "main", "resources").toString();
         try(BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath,"day9-puzzle-input.txt"))) {
-            var lines = br.lines().toList();
+            var lines = br.lines()
+                    .map(Day9Parts1and2::readListNumbers)
+                    .toList();
 
-            var part1Result = solveThePuzzle(lines, Day9Parts1and2::getNextInSequence);
+            var part1Result = lines.stream().parallel()
+                    .map(Day9Parts1and2::getNextInSequence)
+                    .reduce(0, Integer::sum);
             System.out.println("Result part 1 = " + part1Result);
 
-            var part2Result = solveThePuzzle(lines, Day9Parts1and2::getPriorInSequence);
+            var part2Result = lines.stream().parallel()
+                    .map(Day9Parts1and2::getPriorInSequence)
+                    .reduce(0, Integer::sum);
             System.out.println("Result part 2 = " + part2Result);
 
         } catch (IOException e) {
@@ -29,14 +33,6 @@ public class Day9Parts1and2 {
         }
         System.out.println("---------------");
         System.out.println("Completed In: " +(System.nanoTime() - startTime)/ 1_000_000 + "ms");
-    }
-
-    private static Integer solveThePuzzle(List<String> lines, Function<List<Integer>, Integer> solveTheSequence) {
-        return lines.stream().map(sequence -> {
-            var seqList = readListNumbers(sequence);
-
-            return solveTheSequence.apply(seqList);
-        }).reduce(0,Integer::sum);
     }
 
     private static int getNextInSequence(List<Integer> seqList) {
