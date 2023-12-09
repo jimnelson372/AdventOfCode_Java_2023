@@ -39,9 +39,10 @@ public class Day7Part1 {
         }
 
         private void computeHandTypeAndIntrinsicValue(String cards) {
-            var cardValues = cards.codePoints().map(ch -> {
-                return cardOrder.indexOf(ch);
-            }).boxed().toList();
+            var cardValues = cards.codePoints().map(ch -> cardOrder.indexOf(ch))
+                    .boxed()
+                    .toList();
+
             // Converting the hand as though it's a base 13 -> base 10 long.
             this.intrinsicValue = cardValues.stream().reduce(0,(acc, v) -> acc*13 + v);
 
@@ -82,10 +83,10 @@ public class Day7Part1 {
         String resourcesPath = Paths.get("src", "main", "resources").toString();
         try(BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath,"day7-puzzle-input.txt"))) {
 
-            var hands = new java.util.ArrayList<>(br.lines().map(hand -> {
+            var hands = br.lines().map(hand -> {
                 var split = hand.split("\\s");
                 return new Hand(split[0], Integer.parseInt(split[1]));
-            }).sorted().toList());
+            }).sorted().toList();
 
 
             var result = LongStream.range(1,hands.size()+1)
