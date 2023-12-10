@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="27e624bb-6ddf-4c70-92be-8503baebd659" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/uiDesigner.xml" beforeDir="false" />
+    <list default="true" id="27e624bb-6ddf-4c70-92be-8503baebd659" name="Changes" comment="Day6Part1 initial version">
+      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/jimnelson372/aoc2023/day10/Day10Part1.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/day10-test.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/jimnelson372/aoc2023/day7/Day7PartsRefactor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/jimnelson372/aoc2023/day7/Day7PartsRefactor.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -21,10 +22,10 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 6
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
   <component name="ProjectId" id="2ZJUAN6aeSBGK9Npn0jYSr5n2Yy" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -32,14 +33,32 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Application.Day10Part1.executor": "Run",
+    "Application.Day3Part2.executor": "Run",
+    "Application.Day5Part2b.executor": "Run",
+    "Application.Day5Part2c.executor": "Run",
     "Application.Day6Part1.executor": "Run",
     "Application.Day6Part2.executor": "Run",
+    "Application.Day7Part1.executor": "Run",
+    "Application.Day7Part2.executor": "Run",
+    "Application.Day7PartsRefactor.executor": "Run",
+    "Application.Day8Part2_NonGeneralSolution_Exploration.executor": "Run",
     "Application.Day9Parts1and2.executor": "Run",
+    "Application.Day9Parts1and2b.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "extract.method.default.visibility": "public",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.jimnelson372.aoc2023.day10" />
+      <recent name="com.jimnelson372.aoc2023.day9" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -57,6 +76,49 @@
       <option name="presentableId" value="Default" />
       <updated>1702139533130</updated>
     </task>
+    <task id="LOCAL-00001" summary="intelliJ files changed after reinstall.">
+      <option name="closed" value="true" />
+      <created>1702139898742</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1702139898746</updated>
+    </task>
+    <task id="LOCAL-00002" summary="intelliJ files changed after reinstall..">
+      <option name="closed" value="true" />
+      <created>1702139940036</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1702139940036</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Minor formatting fix on Day7Part1 to make clear that code was same in part 2.">
+      <option name="closed" value="true" />
+      <created>1702140225317</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1702140225317</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="Space.CommitStatus" />
+      </list>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="intelliJ files changed after reinstall." />
+    <MESSAGE value="intelliJ files changed after reinstall.." />
+    <MESSAGE value="Minor formatting fix on Day7Part1 to make clear that code was same in part 2." />
+    <MESSAGE value="Day6Part1 initial version" />
+    <option name="LAST_COMMIT_MESSAGE" value="Day6Part1 initial version" />
   </component>
 </project>
