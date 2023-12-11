@@ -116,6 +116,8 @@ public class Day10Part1 {
 
 
     public static void main(String[] args) {
+        var startTime = System.nanoTime();
+
         String resourcesPath = Paths.get("src", "main", "resources").toString();
         try(BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath,"day10-puzzle-input.txt"))) {
             // For this problem, I loaded the full file into memory to
@@ -171,6 +173,8 @@ public class Day10Part1 {
         } catch (IOException e) {
             System.out.print("The puzzle input was not found at expected location.");
         }
+        System.out.println("---------------");
+        System.out.println("Completed In: " +(System.nanoTime() - startTime)/ 1_000_000 + "ms");
     }
 
 }
