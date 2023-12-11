@@ -59,7 +59,7 @@ public class Day11Part1 {
     }
 
     private static int sumOfShortestPathsFrom(Coord base, List<Coord> remList) {
-        return remList.stream().reduce(0, (acc,c) -> acc + getShortestPath(base, c),(a,b) -> 0);
+        return remList.stream().reduce(0, (acc,c) -> Math.addExact(acc,getShortestPath(base, c)),(a,b) -> 0);
     }
 
 
