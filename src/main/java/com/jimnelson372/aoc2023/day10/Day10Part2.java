@@ -213,8 +213,9 @@ public class Day10Part2 {
 
             var startPosition = findPositionOfStart(schematic);
 
-            // And for later, I want the implied PathType at the starting position.
+            // And for later, I want the implied Pipe Type at the starting position.
             var startPosPipeType = getPipeTypeAtStart(schematic, startPosition);
+            //schematic.get(startPosition.y).set(startPosition.x,startPosPipeType);
             //System.out.println(startPosPipeType);
 
             var curDirection = startPosPipeType.opening1;
