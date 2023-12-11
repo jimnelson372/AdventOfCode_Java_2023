@@ -67,8 +67,6 @@ public class Day11Part2 {
         return remList.stream().reduce(0L, (acc,c) -> Math.addExact(acc, getShortestPath(base, c)),(a,b) -> 0L);
     }
 
-
-
     private static List<Coord> expandSpace(List<Coord> positions, List<Long> emptyColumns, List<Long> emptyRows, long expansionFactor) {
         return positions.stream()
                 .map(c -> {
