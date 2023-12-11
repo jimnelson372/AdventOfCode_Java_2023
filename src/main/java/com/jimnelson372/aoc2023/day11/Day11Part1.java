@@ -24,10 +24,14 @@ public class Day11Part1 {
 
             var initialGalaxyCoords = getListOfGalaxyCoordinates(heightOfSpace, initialSpaceMap);
 
-            var emptyColumns = findEmptySliceOfSpace(initialGalaxyCoords, Coord::x, widthOfSpace);
-            var emptyRows = findEmptySliceOfSpace(initialGalaxyCoords, Coord::y, heightOfSpace);
+            var emptyColumns = findEmptySlicesOfSpace(initialGalaxyCoords, Coord::x, widthOfSpace);
+            var emptyRows = findEmptySlicesOfSpace(initialGalaxyCoords, Coord::y, heightOfSpace);
 
             var coordsAfterExpansion = expandSpace(initialGalaxyCoords, emptyColumns, emptyRows);
+            System.out.println("Total space coordinates before expansion: " + heightOfSpace*widthOfSpace);
+            System.out.println("Total space coordinates after expansion: "
+                    + (heightOfSpace + emptyRows.size()*2) * (widthOfSpace + emptyColumns.size()*2));
+            System.out.println("Number of galaxies: " + initialGalaxyCoords.size());
 
 //            // debug info
 //            initialSpaceMap.forEach(System.out::println);
@@ -59,10 +63,9 @@ public class Day11Part1 {
     }
 
     private static int sumOfShortestPathsFrom(Coord base, List<Coord> remList) {
+        // Math.addExact to be alerted of possible int overflow exceptions.
         return remList.stream().reduce(0, (acc,c) -> Math.addExact(acc,getShortestPath(base, c)),(a,b) -> 0);
     }
-
-
 
     private static List<Coord> expandSpace(List<Coord> positions, List<Integer> emptyColumns, List<Integer> emptyRows) {
         return positions.stream()
@@ -76,7 +79,7 @@ public class Day11Part1 {
                 .toList();
     }
 
-    private static List<Integer> findEmptySliceOfSpace(List<Coord> positions, Function<Coord, Integer> xySelector, int totalSize) {
+    private static List<Integer> findEmptySlicesOfSpace(List<Coord> positions, Function<Coord, Integer> xySelector, int totalSize) {
         var nonEmptyColumns = positions.stream().collect(Collectors.groupingBy(xySelector,Collectors.counting()));
         //System.out.println(nonEmptyColumns);
         return IntStream.range(0, totalSize)

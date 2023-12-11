@@ -25,14 +25,20 @@ public class Day11Part2 {
 
             var initialGalaxyCoords = getListOfGalaxyCoordinates(heightOfSpace, initialSpaceMap);
 
-            var emptyColumns = findEmptySliceOfSpace(initialGalaxyCoords, Coord::x, widthOfSpace);
-            var emptyRows = findEmptySliceOfSpace(initialGalaxyCoords, Coord::y, heightOfSpace);
+            var emptyColumns = findEmptySlicesOfSpace(initialGalaxyCoords, Coord::x, widthOfSpace);
+            var emptyRows = findEmptySlicesOfSpace(initialGalaxyCoords, Coord::y, heightOfSpace);
 
             // Simply adding this scaling factor was logically all I needed to do.
             // However, in the original version I was using int types, which overflowed without exceptions
             //  on this larger expansion factor.   I upgrade this to using long types instead,but also
             //  added Math.addExact() to the summing of the shortest paths.
-            var coordsAfterExpansion = expandSpace(initialGalaxyCoords, emptyColumns, emptyRows, 1_000_000);
+            long expansionFactor = 1_000_000L;
+            var coordsAfterExpansion = expandSpace(initialGalaxyCoords, emptyColumns, emptyRows, expansionFactor);
+
+            System.out.println("Total space coordinates before expansion: " + heightOfSpace*widthOfSpace);
+            System.out.println("Total space coordinates after expansion: "
+                    + (heightOfSpace + emptyRows.size()*expansionFactor) * (widthOfSpace + emptyColumns.size()*expansionFactor));
+            System.out.println("Number of galaxies: " + initialGalaxyCoords.size());
 
 //            // debug info
 //            initialSpaceMap.forEach(System.out::println);
@@ -64,6 +70,7 @@ public class Day11Part2 {
     }
 
     private static long sumOfShortestPathsFrom(Coord base, List<Coord> remList) {
+        // Math.addExact to be alerted of possible long overflow exceptions.
         return remList.stream().reduce(0L, (acc,c) -> Math.addExact(acc, getShortestPath(base, c)),(a,b) -> 0L);
     }
 
@@ -79,7 +86,7 @@ public class Day11Part2 {
                 .toList();
     }
 
-    private static List<Long> findEmptySliceOfSpace(List<Coord> positions, Function<Coord, Long> xySelector, int totalSize) {
+    private static List<Long> findEmptySlicesOfSpace(List<Coord> positions, Function<Coord, Long> xySelector, int totalSize) {
         var nonEmptyColumns = positions.stream().collect(Collectors.groupingBy(xySelector,Collectors.counting()));
         //System.out.println(nonEmptyColumns);
         return LongStream.range(0, totalSize)
