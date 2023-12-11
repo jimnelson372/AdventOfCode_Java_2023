@@ -90,12 +90,18 @@ public class Day10Part2refactored {
         }
 
         private int getVertCrossingIncrement(PipeType nextPipeType) {
-            return nextPipeType.hasVertical() ? switch (this) {
-                case EastWest -> 0;
-                case NorthEast -> nextPipeType == SouthWest ? 0 : 1;
-                case SouthEast -> nextPipeType == NorthWest ? 0 : 1;
-                default -> 1;
-            } : 0;
+            // To be a crossing, a vertical pipe must:
+            //    1) Hava a vertical component.
+            //    2) If a turn, it must continue along the same vertical direction, not turn back.
+            //    3) NorthSouth always counts as a crossing.
+            //    4) EastWest is ignored.
+            return nextPipeType.hasVertical()
+                    ? switch (this) {
+                        case EastWest -> 0; // ignore eastwest
+                        case NorthEast -> nextPipeType == SouthWest ? 0 : 1; // turned back
+                        case SouthEast -> nextPipeType == NorthWest ? 0 : 1; // turned back.
+                        default -> 1; // any other vertical is a crossing, i.e. default catches NorthSouth.
+                    } : 0; // not a vertical.
         }
 
 
@@ -243,25 +249,7 @@ public class Day10Part2refactored {
         Position curPosition;
         var tilesInLoop = 0;
         for (int i = 0; i < Schematic.maxRows; i++) {
-            int finalI = i;
-            var pipesOnPathOnly = IntStream.range(0, Schematic.maxCols)
-                    .mapToObj(u -> {
-                        var pos = new Position(u, finalI);
-                        return Schematic.pipeTracking[pos.y][pos.x] == 0
-                                ? PipeType.None
-                                : Schematic.getCurPipeTypeOnPath(pos);
-                    })
-                    .toList();
-
-            int vertCrossingCount = 0;
             var countedPipeOnPath = PipeType.None;
-            for (PipeType p : pipesOnPathOnly) {
-                vertCrossingCount += countedPipeOnPath.getVertCrossingIncrement(p);
-                if (p != PipeType.EastWest)
-                    countedPipeOnPath = p;
-            }
-
-            countedPipeOnPath = PipeType.None;
             var curPipeOnPath = PipeType.None;
             var curCrossingCount = 0;
             for (int j = 0; j < Schematic.maxCols; j++) {
@@ -273,13 +261,16 @@ public class Day10Part2refactored {
                                     ? PipeType.None
                                     : Schematic.getCurPipeTypeOnPath(curPosition);
 
+
                 curCrossingCount += countedPipeOnPath.getVertCrossingIncrement(curPipeOnPath);
                 // Ignore purely horizontal pipes, i.e. EastWest, in this algorithm.
                 if (curPipeOnPath != PipeType.EastWest)
                     countedPipeOnPath = curPipeOnPath;
 
-                boolean otherSideOdd = (vertCrossingCount - curCrossingCount) % 2 == 1;
-                if (isTile && (curCrossingCount % 2 == 1 || otherSideOdd)) {
+                // To know if we're surrounded, it's enough to test if we've crossed an odd number of vertical crossings.
+                //   with the key to this counting being done in the "getVertCrossingIncrement" above.
+                //    (not enough just to count pipes with vertical sections.)
+                if (isTile && (curCrossingCount % 2 == 1 )) {
                     tilesInLoop += 1;
                     if (display) System.out.print("I");
                 }
@@ -300,7 +291,7 @@ public class Day10Part2refactored {
 
             Schematic.initializeSchematicData(br);
 
-            boolean display = false;
+            boolean display = true;
             var pipeDistance = computeDay10Part1Answer(display);
             var tilesInLoop = computeDay10Part2Answer(display);
 
