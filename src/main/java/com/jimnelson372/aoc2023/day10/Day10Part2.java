@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Day10Part2 {
 
@@ -165,16 +166,7 @@ public class Day10Part2 {
         var maxRows = schematic.size();
         var maxCols = schematic.get(0).size();
 
-
-        var directions = List.of(Direction.North, Direction.South, Direction.East, Direction.West);
-        for (var dir : directions) {
-            Position pos = curPosition.nextSafePosition(dir, maxRows, maxCols);
-            var nextPath = schematic.get(pos.y).get(pos.x);
-            var nextDirection = nextPath.nextDirectionIfStarting(dir.reverse());
-            if (nextDirection != Direction.None) break;
-        }
-
-        var potentialStartDirections = directions.stream()
+        var potentialStartDirections = Stream.of(Direction.North, Direction.South, Direction.East, Direction.West)
                 .filter(dir -> {
                     Position pos = curPosition.nextSafePosition(dir, maxRows, maxCols);
                     var nextPath = schematic.get(pos.y).get(pos.x);
