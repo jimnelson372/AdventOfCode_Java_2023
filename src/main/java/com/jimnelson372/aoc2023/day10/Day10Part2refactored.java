@@ -291,7 +291,7 @@ public class Day10Part2refactored {
 
             Schematic.initializeSchematicData(br);
 
-            boolean display = true;
+            boolean display = false;
             var pipeDistance = computeDay10Part1Answer(display);
             var tilesInLoop = computeDay10Part2Answer(display);
 
