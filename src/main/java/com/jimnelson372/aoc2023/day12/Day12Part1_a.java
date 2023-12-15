@@ -4,12 +4,49 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 
-public class Day12Part1 {
+public class Day12Part1_a {
+
+        class SupportFunction {
+
+            // I used ChatGPT only for this one algorithm, not to solve the puzzle.
+            // For this algorithm I asked ChatGPT to produce a list of #s of length 'n' that sum to a 'targetSum'
+            // I then modified it to return it in a base 'targetSum' numeric format so it would deal with cases where
+            // The entire approach used in this version of Day 12 Part 1 was flawed, but helped me move on to Part 2.
+            // I would not reuse this function.
+            record NumberInfo(int position, long currentSum, long currentNumber) {
+            }
+            public static List<Long> generateGapDistribution(int n, long targetSum) {
+                List<Long> result = new ArrayList<>();
+                Stack<NumberInfo> stack = new Stack<>();
+                stack.push(new NumberInfo(0, 0, 0));
+
+                while (!stack.isEmpty()) {
+                    NumberInfo info = stack.pop();
+
+                    if (info.position == n && info.currentSum == targetSum) {
+                        //System.out.println(info.currentNumber);
+                        result.add(info.currentNumber);
+                    } else if (info.position < n) {
+                        for (long digit = 0; digit <= targetSum; digit++) {
+                            if (info.currentSum + digit <= targetSum) {
+                                stack.push(new NumberInfo(info.position + 1,
+                                        info.currentSum + digit,
+                                        Math.multiplyExact(info.currentNumber, (targetSum + 1)) + digit));
+                            }
+                        }
+                    }
+                }
+                return result;
+            }
+        }
+
 
     record RowState1(String origPattern, List<String> patterns, List<Integer> numeric, long arrangements, boolean done){}
 
@@ -42,9 +79,6 @@ public class Day12Part1 {
         return rs;
     }
 
-
-
-
     private static RowState1 testFullStringPositioning(RowState1 rs) {
         if (rs.done) return rs;
         //String pattern = rs.origPattern.replaceAll("[.]","O") + "O";
@@ -63,7 +97,7 @@ public class Day12Part1 {
         var minLengthOfGrouped = rs.numeric.stream().reduce(0, (acc, n) -> acc + n + 1);
         var extraSpace = pattern.length() - minLengthOfGrouped;
         var baseNumber = extraSpace+1;
-        var gapNum = NumberGenerator.generateNumbers(groupings.size()+1,extraSpace);
+        var gapNum = SupportFunction.generateGapDistribution(groupings.size()+1,extraSpace);
 
         //System.out.println(pattern + " " + extraSpace + " : " + gapNum);
         //System.out.println(regexPattern);
@@ -99,10 +133,10 @@ public class Day12Part1 {
         String resourcesPath = Paths.get("src", "main", "resources").toString();
         try(BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath,"day12-puzzle-input.txt"))) {
             var res =
-                    br.lines().map(Day12Part1::getInitialRowStateFromLine)
-                    .map(Day12Part1::testSimplestCase)
-                    .map(Day12Part1::testNextSimplestCase)
-                    .map(Day12Part1::testFullStringPositioning)
+                    br.lines().map(Day12Part1_a::getInitialRowStateFromLine)
+                    .map(Day12Part1_a::testSimplestCase)
+                    .map(Day12Part1_a::testNextSimplestCase)
+                    .map(Day12Part1_a::testFullStringPositioning)
                     //.filter(rs -> rs.arrangements == 1)
                       //      .map(rs -> rs.arrangements)
                     //.forEach(System.out::println);
@@ -119,4 +153,6 @@ public class Day12Part1 {
     }
 
 }
+
+
 
