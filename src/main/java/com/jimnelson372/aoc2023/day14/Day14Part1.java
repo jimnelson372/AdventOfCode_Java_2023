@@ -32,9 +32,9 @@ public class Day14Part1 {
     }
 
     private static List<RockCoord> tiltNorth(List<RockCoord> rockCoords, int width) {
-        for (int row = 0; row < width; row++) {
-            int curRow = row;
-            var hashrocks = rockCoords.stream().filter(rock -> rock.x == curRow && rock.type == RockType.HASH).toList();
+        for (int col = 0; col < width; col++) {
+            int curCol = col;
+            var hashrocks = rockCoords.stream().filter(rock -> rock.x == curCol && rock.type == RockType.HASH).toList();
             //System.out.println(hashrocks);
             long lastLowest = hashrocks.get(0).y - 1;
             for (RockCoord hashrock : hashrocks) {
@@ -42,7 +42,7 @@ public class Day14Part1 {
                 long finalLastLowest = lastLowest;
                 rockCoords = rockCoords.stream()
                         .map(rock -> {
-                            if (rock.type == RockType.BIG_O && rock.y > finalLastLowest && rock.y < hashrock.y && rock.x == curRow) {
+                            if (rock.type == RockType.BIG_O && rock.y > finalLastLowest && rock.y < hashrock.y && rock.x == curCol) {
                                 return new RockCoord(RockType.BIG_O, rock.x, dropTo.incrementAndGet());
                             } else
                                 return rock;
