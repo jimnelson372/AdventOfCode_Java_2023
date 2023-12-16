@@ -53,11 +53,9 @@ public class Day13Part1and2 {
         }
         return IntStream.range(1,notesSets.size())
                 .boxed()
-                .map(i -> List.of(i,i+1))
-                .filter(li -> li.get(0)+1==li.get(1))
-                .map(pointToTest -> {
-                    var low = pointToTest.get(0);
-                    var high = pointToTest.get(1);
+                .map(i -> {
+                    var low = i;
+                    var high = i+1;
                     var startingLow = low;
 
                     int notFoundCnt = 0;
@@ -85,7 +83,7 @@ public class Day13Part1and2 {
                     if (notFoundCnt>0) return new ReflectLine(0,0);
                     return new ReflectLine(startingLow,0);
                 })
-                .filter(ip -> ip.lineNumber != 0)
+                .filter(reflect -> reflect.lineNumber != 0)
                 .toList();
     }
     static List<ReflectLine> findLineOfHorizontalReflection(List<String> notes) {
