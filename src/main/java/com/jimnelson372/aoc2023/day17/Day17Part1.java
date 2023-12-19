@@ -180,13 +180,19 @@ public class Day17Part1 {
                 .min((a,b) -> Long.compare(a.currentKnownDistance(),b.currentKnownDistance()))
                 .get();
     }
-    private static long findLeastEnergyLossPath(Position source) {
+    private static long findLeastEnergyLossPath() {
 //        if (source.isEndPosition()) {
 //            return 0L; // We're DONE.
 //        }
 
-        source.setDistance(0);
-        unsettled.add(source);
+        // Needed to provide 2 starting directions on positoin 0,0
+        // so it could properly move forward RIGHT and DOWN.
+        var source1 = Position.makePosition(Direction.UP, 0,0, 1);
+        var source2 = Position.makePosition(Direction.LEFT, 0,0, 1);
+        source1.setDistance(0);
+        source2.setDistance(0);
+        unsettled.add(source1);
+        unsettled.add(source2);
 
         while (hasUnsettled()) {
             var node = getLowestUnsettled();
@@ -218,7 +224,7 @@ public class Day17Part1 {
 
             initializeMap(br);
             initializeState();
-            var solution = findLeastEnergyLossPath(Position.makePosition(Direction.UP, 0,0, 1));
+            var solution = findLeastEnergyLossPath();
             //printMaps();
 
             //System.out.println((seen.size()));
