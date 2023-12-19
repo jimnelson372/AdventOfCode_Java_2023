@@ -115,7 +115,6 @@ public class Day17Part2 {
     static int heightOfSpace = 0;
     static int widthOfSpace = 0;
     static char[][] cityBlocks = new char[0][0];
-    static char[][] trackingMap = new char[0][0];
     static Long[][][][] distances = new Long[0][0][0][0];
 //    static PriorityQueue<Position> unvisited = new PriorityQueue<>(10,
 //            (a,b) -> Long.compare(a.currentKnownDistance(),b.currentKnownDistance()));
@@ -123,24 +122,6 @@ public class Day17Part2 {
 
 
     static Set<Position> seen = new HashSet<>();
-    public static void printMaps() {
-
-        System.out.println("--Blocks Map---");
-        for (int y = 0; y < heightOfSpace; y++) {
-            for (int x = 0; x < widthOfSpace; x++) {
-                System.out.print(cityBlocks[y][x]);
-            }
-            System.out.println();
-        }
-        System.out.println();
-        System.out.println("--Tracking Map---");
-        for (int y = 0; y < heightOfSpace; y++) {
-            for (int x = 0; x < widthOfSpace; x++) {
-                System.out.print(trackingMap[y][x]);
-            }
-            System.out.println();
-        }
-    }
 
     private static void initializeMap(BufferedReader br) {
         var initialCityHeatLossMap = br.lines().toList();
@@ -148,7 +129,6 @@ public class Day17Part2 {
         widthOfSpace = initialCityHeatLossMap.get(0).length();
 
         cityBlocks = new char[heightOfSpace][widthOfSpace];
-        trackingMap = new char[heightOfSpace][widthOfSpace];
         distances = new Long[heightOfSpace][widthOfSpace][4][MAX_STEPS_IN_SAME_DIRECTION];
         for (int y = 0; y < heightOfSpace; y++) {
             for (int x = 0; x < widthOfSpace; x++) {
@@ -158,11 +138,6 @@ public class Day17Part2 {
     }
 
     private static void initializeState() {
-        for (int y = 0; y < heightOfSpace; y++) {
-            for (int x = 0; x < widthOfSpace; x++) {
-                trackingMap[y][x] = '=';
-            }
-        }
         for (int y = 0; y < heightOfSpace; y++) {
             for (int x = 0; x < widthOfSpace; x++) {
                 for (int d=0; d < 4; d++) {
@@ -185,10 +160,6 @@ public class Day17Part2 {
                 .get();
     }
     private static long findLeastEnergyLossPath() {
-//        if (source.isEndPosition()) {
-//            return 0L; // We're DONE.
-//        }
-
         // Needed to provide 2 starting directions on positoin 0,0
         // so it could properly move forward RIGHT and DOWN.
         var source1 = Position.makePosition(Direction.UP, 0,0, 4);
@@ -202,13 +173,11 @@ public class Day17Part2 {
             var node = getLowestUnsettled();
             unsettled.remove(node);
             long prevNodeDist = node.currentKnownDistance();
-//            if (node.isEndPosition())
-//                System.out.println("An EndPosition Result = " + prevNodeDist);
             seen.add(node);
             node.adjacentPositionsStream()
                     .forEach(p -> {
                          if (!seen.contains(p)) {
-                             // for now we'll not track the shorteest path.
+                             // for now we'll not track the shorteest path Positions.
                              int edgeWeight = p.edgeWeight();
                              long potentialNewDistance = prevNodeDist + edgeWeight;
                              if (potentialNewDistance < p.currentKnownDistance())
@@ -218,7 +187,21 @@ public class Day17Part2 {
                     });
         }
 
-        return 0L;
+        // This implementation separately tracked shortest paths coming into
+        // the final node (lower left corner) at different directions and # of
+        //   steps in that direction.
+        // The final answer is therefore the smallest of all of these.
+        // This small double loop finds that minimum.
+        //  And in Part 2, it only looks at those with the minimum number of steps.
+        long min = Long.MAX_VALUE;
+        for(int d=0;d<4;d++) {
+            for (int st = MIN_STEPS_IN_SAME_DIRECTION-1; st < MAX_STEPS_IN_SAME_DIRECTION; st++) {
+                Long testMin = distances[heightOfSpace - 1][widthOfSpace - 1][d][st];
+                //System.out.println("TestMin " + d + " " + st + " " + testMin);
+                min = Math.min(min, testMin);
+            }
+        }
+        return min;
     }
 
     public static void main(String[] args) {
@@ -228,20 +211,10 @@ public class Day17Part2 {
 
             initializeMap(br);
             initializeState();
+
             var solution = findLeastEnergyLossPath();
-            //printMaps();
 
-            //System.out.println((seen.size()));
-            long min = Long.MAX_VALUE;
-            for(int d=0;d<4;d++) {
-                for (int st = MIN_STEPS_IN_SAME_DIRECTION-1; st < MAX_STEPS_IN_SAME_DIRECTION; st++) {
-                    Long testMin = distances[heightOfSpace - 1][widthOfSpace - 1][d][st];
-                    //System.out.println("TestMin " + d + " " + st + " " + testMin);
-                    min = Math.min(min, testMin);
-                }
-            }
-
-            System.out.println("least energy lost: " + min);
+            System.out.println("least energy lost: " + solution);
 
         } catch (IOException e) {
             System.out.print("The puzzle input was not found at expected location.");
