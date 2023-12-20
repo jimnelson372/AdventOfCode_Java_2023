@@ -218,7 +218,7 @@ public class Day20Part2 {
     }
 
 
-    class BorrowedUtils {
+    static class BorrowedUtils {
         // this Least Common Multiple method is from https://www.baeldung.com/java-least-common-multiple
         // It is fast enough for my purposes here.
         public static BigInteger lcm(BigInteger number1, BigInteger number2) {
