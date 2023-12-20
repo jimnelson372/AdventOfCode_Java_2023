@@ -20,7 +20,7 @@ public class Day20Part2 {
     enum PulseType { LOW, HIGH }
     interface Module {
         ModuleType getType();
-        List<String> getSendToes();
+        List<String> getSendTos();
         Module processPulse(PulseMessage pulse);
     }
 
@@ -29,7 +29,7 @@ public class Day20Part2 {
         public ModuleType getType() { return ModuleType.FLIP_FLOP; }
 
         @Override
-        public List<String> getSendToes() {
+        public List<String> getSendTos() {
             return sendTos;
         }
 
@@ -58,7 +58,7 @@ public class Day20Part2 {
         }
 
         @Override
-        public List<String> getSendToes() {
+        public List<String> getSendTos() {
             return sendTos;
         }
 
@@ -72,7 +72,7 @@ public class Day20Part2 {
             List<PulseMessage> resentPulses = mostResentPulses;
             if (mostResentPulses.isEmpty()) {
                 resentPulses = moduleMap.entrySet().stream()
-                        .filter(m-> m.getValue().getSendToes().contains(name))
+                        .filter(m-> m.getValue().getSendTos().contains(name))
                         .map(m -> new PulseMessage(PulseType.LOW,m.getKey(),"initialize"))
                         .toList();
             }
@@ -93,7 +93,7 @@ public class Day20Part2 {
         }
 
         @Override
-        public List<String> getSendToes() {
+        public List<String> getSendTos() {
             return sendTos;
         }
 
@@ -180,7 +180,7 @@ public class Day20Part2 {
             populateModuleMap(br);
 
             var requires = moduleMap.entrySet().stream()
-                    .filter(kv -> kv.getValue().getSendToes().contains("rx"))
+                    .filter(kv -> kv.getValue().getSendTos().contains("rx"))
                     .toList();
 
 
@@ -194,7 +194,7 @@ public class Day20Part2 {
                 // Get the module names that feed this module, and we'll monitor them for
                 //   cycles in their HIGH signally.
                 monitorList = moduleMap.entrySet().stream()
-                        .filter(kv -> kv.getValue().getSendToes().contains(moduleName))
+                        .filter(kv -> kv.getValue().getSendTos().contains(moduleName))
                         .map(Map.Entry::getKey)
                         .toList();
 
