@@ -1,4 +1,4 @@
-package com.jimnelson372.day21;
+package com.jimnelson372.aoc2023.day21;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

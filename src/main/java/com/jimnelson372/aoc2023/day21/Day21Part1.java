@@ -1,4 +1,4 @@
-package com.jimnelson372.day21;
+package com.jimnelson372.aoc2023.day21;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 public class Day21Part1 {
 
 
-    record Position (int x, int y, int steps) {}
+    private record Position (int x, int y, int steps) {}
 
     public static void main(String[] args) {
         var startTime = System.nanoTime();
@@ -88,16 +88,12 @@ public class Day21Part1 {
     }
 
     static void printMap(char[][] map) {
-        var width = map[0].length;
-        var height = map.length;
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                System.out.print(map[y][x]);
+        for (char[] rows : map) {
+            for (char elem : rows) {
+                System.out.print(elem);
             }
             System.out.println();
         }
-        System.out.println();
     }
 
 }

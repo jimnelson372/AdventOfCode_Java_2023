@@ -1,4 +1,4 @@
-package com.jimnelson372.day21;
+package com.jimnelson372.aoc2023.day21;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public class Day21Part2 {
 
 
-    static Set<Position> seen = new HashSet<>();
+    private static Set<Position> seen = new HashSet<>();
 
     record Position(
             long x,
