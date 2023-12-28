@@ -50,9 +50,10 @@ public class Day25Part1 {
 
 //            componentSet.forEach(System.out::println);
 //            wireSet.forEach(System.out::println);
-            System.out.println("Min cut = " + cut.size());
 
-            System.out.println(componentSet.size() + " components and " + wireSet.size()/2 + " wires");
+
+            System.out.println(componentSet.size() + " components and " + wireSet.size() + " wires");
+            System.out.println("Min cut vertices count = " + cut.size());
 
             var answer = cut.size() * (componentSet.size() - cut.size());
             System.out.println("Answer = " + answer);
