@@ -1,0 +1,29 @@
+var('xR1 xR2 xR3 vR1 vR2 vR3')
+var('t1 t2 t3')
+
+# Used the first 3 points, set up the equations and SageMath found the answers.
+h1P = vector([230027994633462, 224850233272831, 164872865225455]);
+h1V = vector([103, -57, 285]);
+I1 = h1P + h1V * t1
+#show(I1)
+h2P = vector([213762157019377, 204038908928791, 198113097692531]);
+h2V = vector([184, -110, 174]);
+I2 = h2P + h2V * t2
+#show(I2)
+h3P = vector([236440979253526, 104012423941037, 223798957622735]);
+h3V = vector([15, 694, -277]);
+I3 = h3P + h3V * t3
+#show(I3)
+RP = vector(SR, [xR1, xR2, xR3]);
+RV = vector(SR, [vR1, vR2, vR3]);
+RatI1 = RP + RV * t1;
+RatI2 = RP + RV * t2;
+RatI3 = RP + RV * t3;
+eq = [RatI1[0] == I1[0],RatI1[1] == I1[1], RatI1[2] == I1[2],
+      RatI2[0] == I2[0],RatI2[1] == I2[1], RatI2[2] == I2[2],
+      RatI3[0] == I3[0],RatI3[1] == I3[1], RatI3[2] == I3[2]]
+
+solution = solve(eq,xR1,xR2,xR3,vR1,vR2,vR3,t1,t2,t3)
+
+puzzleanswer = solution[0][0].rhs()+solution[0][1].rhs()+solution[0][2].rhs()
+print("The answer to Day 24 Part 2 is", puzzleanswer)
