@@ -24,8 +24,12 @@ public class Day25Part1 {
             Component from,
             Component to) {
         Wire(Component from, Component to) {
-            this.from = from.name.compareTo(to.name) < 0 ? from : to;
-            this.to = from.name.compareTo(to.name) < 0 ? to : from;
+            this.from = from.name.compareTo(to.name) < 0
+                    ? from
+                    : to;
+            this.to = from.name.compareTo(to.name) < 0
+                    ? to
+                    : from;
         }
     }
 
@@ -38,14 +42,19 @@ public class Day25Part1 {
             var wireSet = getWireSet(br);
             Set<Component> componentSet = getComponentSet(wireSet);
 
-            var graphBuilderType = GraphTypeBuilder.<Component, DefaultEdge>undirected().allowingMultipleEdges(true).allowingSelfLoops(true)
-                            .edgeClass(DefaultEdge.class).weighted(false).buildGraph();
+            var graphBuilderType = GraphTypeBuilder.<Component, DefaultEdge>undirected()
+                    .allowingMultipleEdges(false)
+                    .allowingSelfLoops(false)
+                    .edgeClass(DefaultEdge.class)
+                    .weighted(false)
+                    .buildGraph();
             var builder = new GraphBuilder<>(graphBuilderType);
             var graph = wireSet.stream()
-                            .reduce(builder, (acc, w) -> acc.addEdge(w.from,w.to)
-                                    ,(a,b) -> a).build();
+                    .reduce(builder, (acc, w) -> acc.addEdge(w.from, w.to)
+                            , (a, b) -> a)
+                    .build();
 
-            var alg = new StoerWagnerMinimumCut<Component,DefaultEdge>(graph);
+            var alg = new StoerWagnerMinimumCut<Component, DefaultEdge>(graph);
             var cut = alg.minCut();
 
 //            componentSet.forEach(System.out::println);
@@ -66,12 +75,6 @@ public class Day25Part1 {
         System.out.println("Completed In: " + (System.nanoTime() - startTime) / 1_000_000 + "ms");
     }
 
-    private static Set<Component> getComponentSet(Set<Wire> wireSet) {
-        return wireSet.stream()
-                .flatMap(w -> Stream.of(w.from,w.to))
-                .collect(Collectors.toSet());
-    }
-
     private static Set<Wire> getWireSet(BufferedReader br) {
 
         return br.lines()
@@ -84,6 +87,12 @@ public class Day25Part1 {
                             .flatMap(toComps -> Stream.of(new Wire(fromComponent, toComps),
                                                           new Wire(toComps, fromComponent)));
                 })
+                .collect(Collectors.toSet());
+    }
+
+    private static Set<Component> getComponentSet(Set<Wire> wireSet) {
+        return wireSet.stream()
+                .flatMap(w -> Stream.of(w.from, w.to))
                 .collect(Collectors.toSet());
     }
 
