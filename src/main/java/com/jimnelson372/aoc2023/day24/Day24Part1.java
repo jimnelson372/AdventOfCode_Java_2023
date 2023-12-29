@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 
 public class Day24Part1 {
@@ -18,16 +18,16 @@ public class Day24Part1 {
     static double minPosition = 200000000000000.0;
     static double maxPosition = 400000000000000.0;
 
-    record HailMatchup(
+    record HailPairing(
             int a,
             int b) {
-        HailMatchup(int a, int b) {
+        HailPairing(int a, int b) {
             this.a = Math.min(a, b);
             this.b = Math.max(a, b);
         }
     }
 
-    record Intersect(
+    record LineIntersect(
             Vector3d at,
             boolean future) {
     }
@@ -45,59 +45,53 @@ public class Day24Part1 {
             var hailList = getHail(br);
             System.out.println("Hail count = " + hailList.size());
 
-            //testVectorIntercept();
-
-            var seen = new HashSet<>();
-            var hailListSize = hailList.size();
-            AtomicInteger cnt = new AtomicInteger();
-            for (int i = 0; i < hailListSize; i++) {
-                var hail1 = hailList.get(i);
-                for (int j = 0; j < hailListSize; j++) {
-                    var matchup = new HailMatchup(i, j);
-                    if (i == j || seen.contains(matchup)) continue;
-                    var hail2 = hailList.get(j);
-
-//                    System.out.println("Hailstone A" + i + ": " + hail1);
-//                    System.out.println("Hailstone B" + j + ": " + hail2);
-                    var intersect = getIntersectXY(hail1.position, hail2.position, hail1.velocity, hail2.velocity);
-                    intersect.ifPresent(o -> {
-
-                        if (o.at.x >= minPosition && o.at.y >= minPosition && o.at.x <= maxPosition && o.at.y <= maxPosition && o.future) {
-                            cnt.getAndIncrement();
-                        }
-                    });
-//                    intersect.ifPresentOrElse(o -> {
-//
-//                        if (o.at.x >= minPosition && o.at.y >= minPosition && o.at.x <= maxPosition && o.at.y <=
-//                        maxPosition && o.future) {
-//                            cnt.getAndIncrement();
-//                        }
-//                        System.out.print("Paths will cross at " + o.at);
-//                        if (o.at.x >= minPosition && o.at.y >= minPosition && o.at.x <= maxPosition && o.at.y <=
-//                        maxPosition) {
-//                             System.out.print(" inside text area");
-//                        } else {
-//                            System.out.print(" outside the test area");
-//                        }
-//                         System.out.println(" in the " + ((o.future)
-//                                ? "future."
-//                                : "past."));
-//                    }, () -> System.out.println("paths are parallel"));
-//                                        System.out.println();
-                    seen.add(matchup);
-                }
-
-            }
-            System.out.println("Answer is " + cnt);
-
-
-            //hailList.forEach(System.out::println);
+            var answer = countLineIntersectionsOfEachPairOfHail(hailList);
+            System.out.println("Answer is " + answer);
 
         } catch (IOException e) {
             System.out.print("The puzzle input was not found at expected location.");
         }
         System.out.println("---------------");
         System.out.println("Completed In: " + (System.nanoTime() - startTime) / 1_000_000 + "ms");
+    }
+
+    private static int countLineIntersectionsOfEachPairOfHail(List<Hail> hailList) {
+        var seen = new HashSet<>();
+        return IntStream.range(0, hailList.size())
+                .boxed()
+                .map(i -> {
+                    var hail1 = hailList.get(i); // get the hail we'll compare with the rest.
+                    // Now loop through all the others to see if their 2d paths cross.
+                    return (int) IntStream.range(0, hailList.size())
+                            .boxed()
+                            .filter(j -> {
+                                if (i.equals(j)) return false;
+
+                                var pairing = new HailPairing(i, j);
+                                if (seen.contains(pairing)) return false;
+                                seen.add(pairing);
+
+                                // This is the hail to test against hail1.
+                                var hail2 = hailList.get(j);
+
+                                var intersect =
+                                        get2DLineIntersectionPoint(hail1.position,
+                                                                   hail1.velocity,
+                                                                   hail2.position,
+                                                                   hail2.velocity);
+                                if (intersect.isPresent()) {
+                                    var o = intersect.get();
+                                    // we know we're not parallel at this point.  Now to see
+                                    // if the intersection is within the range and in the future.
+                                    return o.at.x >= minPosition && o.at.y >= minPosition
+                                            && o.at.x <= maxPosition && o.at.y <= maxPosition
+                                            && o.future;
+                                }
+                                return false;
+                            })
+                            .count(); // we count the number of matches per inner stream
+                })
+                .reduce(0, Integer::sum); // we then sum them to get our count.
     }
 
     private static List<Hail> getHail(BufferedReader br) {
@@ -118,66 +112,76 @@ public class Day24Part1 {
                 .toList();
     }
 
-    private static Optional<Intersect> getIntersectXY(Vector3d a1, Vector3d a2, Vector3d b1, Vector3d b2) {
-        var testParallel = new Vector3d();
-        testParallel.cross(b1, b2);
-        if (testParallel.equals(Origin)) {
-            return Optional.empty();
+    private static Optional<LineIntersect> get2DLineIntersectionPoint(Vector3d p1,
+                                                                      Vector3d v1, Vector3d p2,
+                                                                      Vector3d v2) {
+        if (isParallel(v1, v2)) {
+            return Optional.empty(); // No Line Intersect will occur on parallel vectors.
         }
 
+        // We now test to see if we have an intersection by calculating t2, the time of intersection:
+        //      t2 == (v1 X (p1 - p2)) / (v1 X v2)
+        // We can do the division, since for this 2d problem, the cross products are numbers, not vectors.
+        // I found this formula in a 2012 presentation by Prof. N. Harnew of the University of Oxford, MT.
+        // It is derived from:
+        //      p1 + t1*v1 == p2 + t2*v2
+        // Prof Harnew did a cross product on both sides to get the equation:
+        //      v1 X (p1 - p2) == t2 * (v1 X v2)
+        // And I then solved for t2
+
+        // This is: p1 - p2
         var positionDiff = new Vector3d();
-        positionDiff.sub(a1, a2);
-        var intersectLeftOnB1 = new Vector3d();
-        intersectLeftOnB1.cross(b1, positionDiff);
-        var intersectLeftOnB2 = new Vector3d();
-        intersectLeftOnB2.cross(b2, positionDiff);
-        //System.out.println(intersectLeftOnB1);
+        positionDiff.sub(p1, p2);
 
-        var intersectRight = new Vector3d();
-        intersectRight.cross(b1, b2);
-        //System.out.println(intersectRight);
-        var lambdaB1Vec = new Vector3d(intersectLeftOnB1.x / intersectRight.x,
-                                       intersectLeftOnB1.y / intersectRight.y,
-                                       intersectLeftOnB1.z / intersectRight.z);
-        var lambdaB1 = lambdaB1Vec.z;
+        // This is: v1 X v2
+        var velocityCrossProduct = new Vector3d();
+        velocityCrossProduct.cross(v1, v2);
 
-        var lambdaB2Vec = new Vector3d(intersectLeftOnB2.x / intersectRight.x,
-                                       intersectLeftOnB2.y / intersectRight.y,
-                                       intersectLeftOnB2.z / intersectRight.z);
-        var lambdaB2 = lambdaB2Vec.z;
-        //System.out.println(lambdaB);
-        var result = new Vector3d(b2);
-        result.scaleAdd(lambdaB1, a2);
-        var result2 = new Vector3d(b1);
-        result2.scaleAdd(lambdaB2, a1);
+        // This is: v1 X (p1 - p2)
+        var v1CrossPositionDiffs = new Vector3d();
+        v1CrossPositionDiffs.cross(v1, positionDiff);
+        // As I said, the cross products of the 2d art of the vectors are numbers, found in the z component
+        //  of this 3d library cross product.
+        var t2 = v1CrossPositionDiffs.z / velocityCrossProduct.z; // z's hold cross products on 2 dim problem.
 
-        //System.out.println(result);
-        return Optional.of(new Intersect(result, lambdaB1 > 0 && lambdaB2 > 0));
+        // Using t2, we can now find the point where the two vector line cross in 2d space:
+        //   which is at p2 + t2*v2
+        var a2CrossesA1At = new Vector3d(v2);
+        a2CrossesA1At.scaleAdd(t2, p2);
+
+        // Though we have our point of crossing, we have to also calculate t1
+        // in order to test if the point of crossing happens in the past or future.
+        var v2CrossPositionDiffs = new Vector3d();
+        v2CrossPositionDiffs.cross(v2, positionDiff);
+        var t1 = v2CrossPositionDiffs.z / velocityCrossProduct.z;
+
+        // It's only in the future if both t1 and t2 are positive.
+        boolean isIntersectionInTheFuture = t2 > 0 && t1 > 0;
+
+        // We return it as Optional since the Parallel condition tested above
+        //  will not find a crossing point.
+        return Optional.of(new LineIntersect(a2CrossesA1At, isIntersectionInTheFuture));
     }
 
-    private static void testVectorIntercept() {
-        var b1 = new Vector3d(4, 2, 2);
-        var b2 = new Vector3d(3, 2, -1);
-//            b1.scale(-1);
-//            b2.scale(-1);
-        var cross = new Vector3d();
-        cross.cross(b1, b2);
-        //System.out.println(cross);
-
-        var a2 = new Vector3d(-5, 0, 5);
-        var a1 = new Vector3d(-5 + 2, 2, 5 - 4);
-
-        var intersectAt = getIntersectXY(a1, a2, b1, b2);
-        //System.out.println(intersectAt);
-
-        var A = new Vector3d(19, 13, 30);
-        var B = new Vector3d(18, 19, 22);
-        var d1 = new Vector3d(-2, 1, -2);
-        var d2 = new Vector3d(-1, -1, -2);
-
-        var testIntersect = getIntersectXY(A, B, d1, d2);
-        //System.out.println(testIntersect);
+    private static boolean isParallel(Vector3d vec1, Vector3d vec2) {
+        var testParallel = new Vector3d();
+        testParallel.cross(vec1, vec2);
+        return testParallel.equals(Origin); // a 3d cross product on parallel vectors will result in 0,0,0.
     }
 
-
+    // Was only needed during development.
+//    private static void printVerificationOutputForTestData(Optional<LineIntersect> intersect) {
+//        intersect.ifPresentOrElse(o -> {
+//            System.out.print("Paths will cross at " + o.at);
+//            if (o.at.x >= minPosition && o.at.y >= minPosition && o.at.x <= maxPosition && o.at.y <=
+//                    maxPosition) {
+//                System.out.print(" inside text area");
+//            } else {
+//                System.out.print(" outside the test area");
+//            }
+//            System.out.println(" in the " + ((o.future)
+//                    ? "future."
+//                    : "past."));
+//        }, () -> System.out.println("paths are parallel"));
+//    }
 }
