@@ -20,7 +20,9 @@ public class Day25Part1 {
         String resourcesPath = Paths.get("src", "main", "resources")
                 .toString();
         try (BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath, "day25-puzzle-input.txt"))) {
+
             var graph = buildGraphFromInput(br);
+
             solveDay25(graph);
 
         } catch (IOException e) {
