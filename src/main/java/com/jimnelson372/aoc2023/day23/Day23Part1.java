@@ -15,8 +15,7 @@ public class Day23Part1 {
     static Long[][] distances = new Long[0][0];
     static Position[][] prev = new Position[0][0];
     static Set<Position> unsettled = new HashSet<>();
-    static Set<Position> seen = new HashSet<>();
-    static Map<Position, Set<Position>> posFrom = new HashMap<>();
+    static Map<Position, Set<Position>> movedFromPositions = new HashMap<>();
 
 
     record Position(
@@ -27,10 +26,10 @@ public class Day23Part1 {
             return 1;
         }
 
-        void addAPrev(Position p) {
-            var set = posFrom.getOrDefault(this, new HashSet<>());
+        void movedToFrom(Position p) {
+            var set = movedFromPositions.getOrDefault(this, new HashSet<>());
             set.add(p);
-            posFrom.put(this, set);
+            movedFromPositions.put(this, set);
         }
 
         Stream<Position> adjacentPositionsStream() {
@@ -45,12 +44,9 @@ public class Day23Part1 {
             if (x + 1 == widthOfSpace) return Optional.empty();
             if ("#<".indexOf(hikingTrailPosition[y][x + 1]) >= 0) return Optional.empty();
             Position newPosition = new Position(x + 1, y);
-            if (this.hasPrevOf(newPosition)) {
+            if (this.hasMovedToFrom(newPosition)) {
                 return Optional.empty();
             }
-//            if (seen.contains(newPosition)) {
-//                return Optional.empty();
-//            }
             return Optional.of(newPosition);
         }
 
@@ -58,13 +54,9 @@ public class Day23Part1 {
             if (y - 1 < 0) return Optional.empty();
             if ("#v".indexOf(hikingTrailPosition[y - 1][x]) >= 0) return Optional.empty();
             Position newPosition = new Position(x, y - 1);
-            if (this.hasPrevOf(newPosition)) {
+            if (this.hasMovedToFrom(newPosition)) {
                 return Optional.empty();
             }
-
-//            if (seen.contains(newPosition)) {
-//                return Optional.empty();
-//            }
             return Optional.of(newPosition);
         }
 
@@ -72,12 +64,9 @@ public class Day23Part1 {
             if (x - 1 < 0) return Optional.empty();
             if ("#>".indexOf(hikingTrailPosition[y][x - 1]) >= 0) return Optional.empty();
             Position newPosition = new Position(x - 1, y);
-            if (this.hasPrevOf(newPosition)) {
+            if (this.hasMovedToFrom(newPosition)) {
                 return Optional.empty();
             }
-//            if (seen.contains(newPosition)) {
-//                return Optional.empty();
-//            }
             return Optional.of(newPosition);
         }
 
@@ -85,28 +74,22 @@ public class Day23Part1 {
             if (y + 1 == heightOfSpace) return Optional.empty();
             if ("#^".indexOf(hikingTrailPosition[y + 1][x]) >= 0) return Optional.empty();
             Position newPosition = new Position(x, y + 1);
-            if (this.hasPrevOf(newPosition)) {
+            if (this.hasMovedToFrom(newPosition)) {
                 return Optional.empty();
             }
-//            if (seen.contains(newPosition)) {
-//                return Optional.empty();
-//            }
             return Optional.of(newPosition);
         }
 
-        boolean hasPrevOf(Position p) {
-            var set = posFrom.getOrDefault(this, new HashSet<>());
+        boolean hasMovedToFrom(Position p) {
+            var set = movedFromPositions.getOrDefault(this, new HashSet<>());
             return set.contains(p);
-
         }
 
         long currentKnownDistance() {
-
             return distances[this.y][this.x];
         }
 
         void setDistance(long dist) {
-
             distances[this.y][this.x] = dist;
         }
 
@@ -127,8 +110,6 @@ public class Day23Part1 {
 
             initializeMap(br);
             initializeState();
-
-//            System.out.println("width;height " + List.of(widthOfSpace, heightOfSpace));
 
             var solution = findLongestPath();
 
@@ -166,11 +147,10 @@ public class Day23Part1 {
                 prev[y][x] = null;
             }
         }
-        seen = new HashSet<>();
     }
 
     private static long findLongestPath() {
-        // Needed to provide 2 starting directions on positoin 0,0
+        // Needed to provide 2 starting directions on position 0,0,
         // so it could properly move forward RIGHT and DOWN.
         var source1 = new Position(1, 0);
         source1.setDistance(0);
@@ -181,12 +161,11 @@ public class Day23Part1 {
             var node = getHighestUnsettled();
             unsettled.remove(node);
             long prevNodeDist = node.currentKnownDistance();
-            seen.add(node);
             var stream = node.adjacentPositionsStream()
                     .toList();
             stream.forEach(p -> {
-                p.addAPrev(node);
-                int edgeWeight = -p.edgeWeight();
+                p.movedToFrom(node); // to prevent p from moving in direction it has come from.
+                int edgeWeight = -p.edgeWeight();  //use the negative for longest path.
                 long potentialNewDistance = prevNodeDist + edgeWeight;
                 if (potentialNewDistance < p.currentKnownDistance()) {
                     p.setDistance(potentialNewDistance);
@@ -195,16 +174,6 @@ public class Day23Part1 {
                 unsettled.add(p);
             });
         }
-
-        var dest1 = new Position(widthOfSpace - 2, heightOfSpace - 1);
-        int cnt = 0;
-        while (dest1.getPrev() != null) {
-            hikingTrailPosition[dest1.y][dest1.x] = 'O';
-            cnt++;
-            dest1 = dest1.getPrev();
-        }
-//        System.out.println("------- " + cnt);
-//        printMap();
 
         return -distances[heightOfSpace - 1][widthOfSpace - 2];
     }
@@ -215,15 +184,17 @@ public class Day23Part1 {
 
     static Position getHighestUnsettled() {
         return unsettled.stream()
-                .min((a, b) -> Long.compare(a.currentKnownDistance(), b.currentKnownDistance()))
-                //.get();
-                .orElseGet(() -> {
-                    System.out.println("{{{{{{{{{}}}}}}}}}}");
-                    return new Position(-1, -1);
-                });
+                .min(Comparator.comparingLong(Position::currentKnownDistance))
+                .orElseThrow(() -> new RuntimeException("Cycle exists so cannot use this longest path algorithm."));
     }
 
     static void printMap() {
+        // If we have found the longest path, it will be marked in Os.
+        var dest1 = new Position(widthOfSpace - 2, heightOfSpace - 1);
+        while (dest1.getPrev() != null) {
+            hikingTrailPosition[dest1.y][dest1.x] = 'O';
+            dest1 = dest1.getPrev();
+        }
         for (char[] rows : hikingTrailPosition) {
             for (char elem : rows) {
                 System.out.print(elem);
