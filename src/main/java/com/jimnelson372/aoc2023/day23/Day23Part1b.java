@@ -11,11 +11,12 @@ import java.util.stream.Stream;
 
 public class Day23Part1b {
 
+    static List<String> hikingMap = List.of();
     static int heightOfSpace = 0;
     static int widthOfSpace = 0;
     static Position startNode;
     static Position endNode;
-    static Map<Position, Position> nodeSet = new HashMap<>();
+    static Set<Position> nodeSet = new HashSet<>();
     static Set<Edge> edgeSet = new HashSet<>();
 
     record Position(
@@ -71,14 +72,14 @@ public class Day23Part1b {
         }
     }
 
-    record PosAndBlock(
-            Position pos,
-            Position block) {
+    record ExploreInfo(
+            Position position,
+            Position blockage) {
     }
 
     record WalkState(
             int steps,
-            PosAndBlock posBlock,
+            ExploreInfo exploreInfo,
             boolean twoWay) {
     }
 
@@ -89,6 +90,8 @@ public class Day23Part1b {
         try (BufferedReader br = Files.newBufferedReader(Paths.get(resourcesPath, "day23-puzzle-input.txt"))) {
 
             initializeMap(br);
+            createOneWayGraphFromMap();
+
             var longest = findLongestPath();
             System.out.println("Longest Path " + longest);
 
@@ -110,25 +113,13 @@ public class Day23Part1b {
                                        (e.length < 0)));
     }
 
-    private static List<Position> outDirections(Position nextPosition, Position blockPosition, List<String> map) {
-        return Stream.of(filterPosition(nextPosition.up(), map, blockPosition, "v#"),
-                         filterPosition(nextPosition.right(), map, blockPosition, "<#"),
-                         filterPosition(nextPosition.down(), map, blockPosition, "^#"),
-                         filterPosition(nextPosition.left(), map, blockPosition, ">#"))
+    private static List<Position> outDirections(Position nextPosition, Position blockPosition) {
+        return Stream.of(filterPosition(nextPosition.up(), blockPosition, "v#"),
+                         filterPosition(nextPosition.right(), blockPosition, "<#"),
+                         filterPosition(nextPosition.down(), blockPosition, "^#"),
+                         filterPosition(nextPosition.left(), blockPosition, ">#"))
                 .flatMap(Optional::stream)
                 .toList();
-    }
-
-    static void addToEdgeMap(Position p1, Position p2, int distance, boolean twoWay) {
-        edgeSet.add(new Edge(p1, p2, distance));
-        if (twoWay) {
-            edgeSet.add(new Edge(p2, p1, distance));
-        }
-    }
-
-    static char charAt(List<String> map, Position position) {
-        return map.get(position.y)
-                .charAt(position.x);
     }
 
     private static long findLongestPathRecur(Position from, Set<Position> seen, long distance) {
@@ -152,8 +143,66 @@ public class Day23Part1b {
         return findLongestPathRecur(startNode, new HashSet<>(), 0);
     }
 
+
+    private static void initializeMap(BufferedReader br) {
+        hikingMap = br.lines()
+                .toList();
+        heightOfSpace = hikingMap.size();
+        widthOfSpace = hikingMap.get(0)
+                .length();
+    }
+
+    private static void createOneWayGraphFromMap() {
+        startNode = new Position(1, 0);
+        endNode = new Position(widthOfSpace - 2, heightOfSpace - 1);
+        nodeSet.add(startNode);
+
+        var unsettled = new ArrayDeque<ExploreInfo>();
+        unsettled.add(new ExploreInfo(startNode, startNode));
+        while (!unsettled.isEmpty()) {
+            var pair = unsettled.poll();
+            var fromPosition = pair.position;
+            outDirections(fromPosition, pair.blockage) // all directions except backwards (the blockage)
+                    .forEach(exploreDirection -> {
+                        // Move forward along path, counting steps, so long as we only
+                        // have one direction we can move.
+                        int steps = 1;
+                        boolean twoWay = true; // Assume two-way unless we hit a slippery slope.
+                        Position toPosition = exploreDirection;
+                        var blockedPosition = fromPosition;  // blockedPosition just says we can't go backwards.
+                        var localDir = outDirections(toPosition, blockedPosition);
+                        while (localDir.size() == 1) {
+                            steps++;
+                            twoWay = twoWay && charOnMapAt(toPosition) == '.';
+                            blockedPosition = toPosition;
+                            toPosition = localDir.get(0);
+                            localDir = outDirections(toPosition, blockedPosition);
+                        }
+
+                        // If the position we have reached is not already a known Node,
+                        //   add it to the nodeSet and also add it to our unsettled queue
+                        //   for further exploration.
+                        if (!nodeSet.contains(toPosition)) {
+                            nodeSet.add(toPosition);
+                            unsettled.add(new ExploreInfo(toPosition,
+                                                          blockedPosition)); //again, backwards is blocked.
+                        }
+                        // Also add the weighted edge from the 'fromPosition' to this new 'toPosition'
+                        edgeSet.add(new Edge(fromPosition, toPosition, steps));
+                        // if twoWay, add the edge in the opposite direction as well.
+                        if (twoWay) {
+                            edgeSet.add(new Edge(toPosition, fromPosition, steps));
+                        }
+                    });
+        }
+    }
+
+    static char charOnMapAt(Position position) {
+        return hikingMap.get(position.y)
+                .charAt(position.x);
+    }
+
     static Optional<Position> filterPosition(Position newPosition,
-                                             List<String> map,
                                              Position blockPosition,
                                              String barriers) {
         var newY = newPosition.y;
@@ -161,67 +210,9 @@ public class Day23Part1b {
         return ((newY < 0) || (newY == heightOfSpace)
                 || (newX < 0) || (newX == widthOfSpace)
                 || (newPosition.equals(blockPosition))
-                || (barriers.indexOf(charAt(map, newPosition)) >= 0))
+                || (barriers.indexOf(charOnMapAt(newPosition)) >= 0))
                 ? Optional.empty()
                 : Optional.of(newPosition);
-    }
-
-    private static void initializeMap(BufferedReader br) {
-        var hikingMap = br.lines()
-                .toList();
-        heightOfSpace = hikingMap.size();
-        widthOfSpace = hikingMap.get(0)
-                .length();
-
-        startNode = new Position(1, 0);
-        endNode = new Position(widthOfSpace - 2, heightOfSpace - 1);
-        nodeSet.put(startNode, startNode);
-        var unsettled = new ArrayDeque<PosAndBlock>();
-        unsettled.add(new PosAndBlock(startNode, startNode));
-        while (!unsettled.isEmpty()) {
-            var pair = unsettled.poll();
-            var fromPosition = pair.pos;
-            var blockingPosition = pair.block;
-            var directions = outDirections(fromPosition, blockingPosition, hikingMap);
-            var endNodes = directions.stream()
-                    .map(d -> {
-                        int cnt = 1;
-                        boolean twoWay = true;
-                        Position localToPosition = d;
-                        var localBlocking = fromPosition;
-                        var localDir = outDirections(localToPosition, localBlocking, hikingMap);
-                        while (localDir.size() == 1) {
-                            cnt++;
-                            twoWay = twoWay && charAt(hikingMap, localToPosition) == '.';
-                            localBlocking = localToPosition;
-                            localToPosition = localDir.get(0);
-                            localDir = outDirections(localToPosition, localBlocking, hikingMap);
-                        }
-                        return new WalkState(cnt,
-                                             new PosAndBlock(
-                                                     localToPosition,
-                                                     localBlocking), twoWay);
-                    })
-                    .toList();
-            endNodes.stream()
-                    .filter(ip -> nodeSet.containsKey(ip.posBlock.pos))
-                    .forEach(ip -> {
-                        if (ip.posBlock.pos.equals(endNode)) {
-                            addToEdgeMap(fromPosition, endNode, ip.steps, ip.twoWay);
-                        } else {
-                            addToEdgeMap(fromPosition, ip.posBlock.pos, ip.steps, ip.twoWay);
-                        }
-                    });
-            endNodes.stream()
-                    .filter(ip -> !nodeSet.containsKey(ip.posBlock.pos))
-                    .forEach(ip -> {
-                        nodeSet.put(ip.posBlock.pos, ip.posBlock.pos);
-
-                        addToEdgeMap(fromPosition, ip.posBlock.pos, ip.steps, ip.twoWay);
-                        unsettled.add(new PosAndBlock(ip.posBlock.pos, ip.posBlock.block));
-                    });
-
-        }
     }
 
 }
